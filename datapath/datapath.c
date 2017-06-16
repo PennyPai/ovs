@@ -2364,30 +2364,52 @@ static int __init dp_init(void)
 {
 	int err;
 
+	/**
+	 * 强制编译器编译时检查缓冲区大小
+	 * #define BUILD_BUG_ON(condition)  ((void)BUILD_BUG_ON_ZERO(condition))
+	 */ 
 	BUILD_BUG_ON(sizeof(struct ovs_skb_cb) > FIELD_SIZEOF(struct sk_buff, cb));
 
 	pr_info("Open vSwitch switching datapath %s\n", VERSION);
 
+	/**
+	 * 做一些兼容性的初始化，主要是初始化ip分片功能
+	 */
 	err = compat_init();
 	if (err)
 		goto error;
 
+	/**
+	 * 初始化flow keys和action的fifo队列
+	 */
 	err = action_fifos_init();
 	if (err)
 		goto error_compat_exit;
 
+	/**
+	 * 
+	 */
 	err = ovs_internal_dev_rtnl_link_register();
 	if (err)
 		goto error_action_fifos_exit;
 
+	/**
+	 * flow初始化
+	 */
 	err = ovs_flow_init();
 	if (err)
 		goto error_unreg_rtnl_link;
 
+	/**
+	 * vport初始化
+	 */
 	err = ovs_vport_init();
 	if (err)
 		goto error_flow_exit;
 
+	/**
+	 * 注册虚拟网络设备到系统默认命名空间init_net，此外用户自定义命名空间为net
+	 */
 	err = register_pernet_device(&ovs_net_ops);
 	if (err)
 		goto error_vport_exit;
@@ -2396,10 +2418,17 @@ static int __init dp_init(void)
 	if (err)
 		goto error_netns_exit;
 
+	/**
+	 * 初始化虚拟网络设备
+	 */
 	err = ovs_netdev_init();
 	if (err)
 		goto error_unreg_notifier;
 
+	/**
+	 * 完成对四种类型的family以及相应操作的注册，包括datapath、vport、flow 和packet。
+	 * 前三种family，都对应四种操作都包括NEW、DEL、GET、SET，而packet的操作仅为EXECUTE。
+	 */
 	err = dp_register_genl();
 	if (err < 0)
 		goto error_unreg_netdev;
