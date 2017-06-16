@@ -2440,13 +2440,29 @@ static void dp_cleanup(void)
 	compat_exit();
 }
 
+/** 
+ * 驱动的初始化函数、卸载函数
+ */
 module_init(dp_init);
 module_exit(dp_cleanup);
 
+/**
+ * 驱动模块描述信息: 描述、许可证、版本、别名等
+ */
 MODULE_DESCRIPTION("Open vSwitch switching datapath");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(VERSION);
 MODULE_ALIAS_GENL_FAMILY(OVS_DATAPATH_FAMILY);
 MODULE_ALIAS_GENL_FAMILY(OVS_VPORT_FAMILY);
 MODULE_ALIAS_GENL_FAMILY(OVS_FLOW_FAMILY);
+/** 
+ * 通用网络链路簇
+ * #define OVS_PACKET_FAMILY "ovs_packet"
+ *
+ * #define MODULE_ALIAS_GENL_FAMILY(family)\
+ *     MODULE_ALIAS_NET_PF_PROTO_NAME(PF_NETLINK, NETLINK_GENERIC, "-family-" family)
+ *
+ * #define MODULE_ALIAS_NET_PF_PROTO_NAME(pf, proto, name) \
+ *     MODULE_ALIAS("net-pf-" __stringify(pf) "-proto-" __stringify(proto) \
+ */
 MODULE_ALIAS_GENL_FAMILY(OVS_PACKET_FAMILY);
