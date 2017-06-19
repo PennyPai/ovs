@@ -2387,7 +2387,7 @@ static int __init dp_init(void)
 		goto error_compat_exit;
 
 	/**
-	 * 
+	 * 注册设备网络链路
 	 */
 	err = ovs_internal_dev_rtnl_link_register();
 	if (err)
@@ -2414,6 +2414,9 @@ static int __init dp_init(void)
 	if (err)
 		goto error_vport_exit;
 
+	/**
+	 * 注册设备事件通知连
+	 */
 	err = register_netdevice_notifier(&ovs_dp_device_notifier);
 	if (err)
 		goto error_netns_exit;
