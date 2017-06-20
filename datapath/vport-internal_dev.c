@@ -330,10 +330,16 @@ int ovs_internal_dev_rtnl_link_register(void)
 {
 	int err;
 
+	/**
+	 * 注册rtnl_link_ops结构体变量到netlink总线，以至于用户空间可以使用socket(PF_NETLINK, ..., NETLINK_GENERIC)创建响应的socket。
+	 */
 	err = rtnl_link_register(&internal_dev_link_ops);
 	if (err < 0)
 		return err;
 
+	/**
+	 * 注册虚拟端口结构体变量
+	 */
 	err = ovs_vport_ops_register(&ovs_internal_vport_ops);
 	if (err < 0)
 		rtnl_link_unregister(&internal_dev_link_ops);

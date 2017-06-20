@@ -2278,6 +2278,13 @@ static int __init dp_register_genl(void)
 
 	for (i = 0; i < ARRAY_SIZE(dp_genl_families); i++) {
 
+		/**
+		 * 注册通用netlink子协议，包括datapath、vport、flow、packet
+		 * socket(PF_NETLINK, ..., OVS_DATAPATH_FAMILY)
+		 * socket(PF_NETLINK, ..., OVS_VPORT_FAMILY)
+		 * socket(PF_NETLINK, ..., OVS_FLOW_FAMILY)
+		 * socket(PF_NETLINK, ..., OVS_PACKET_FAMILY)
+		 */
 		err = genl_register_family(dp_genl_families[i]);
 		if (err)
 			goto error;
@@ -2387,7 +2394,8 @@ static int __init dp_init(void)
 		goto error_compat_exit;
 
 	/**
-	 * 注册设备网络链路
+	 * 注册netlink协议簇，PF_NETLINK
+	 * socket(PF_NETLINK, ..., ...)
 	 */
 	err = ovs_internal_dev_rtnl_link_register();
 	if (err)
@@ -2408,7 +2416,7 @@ static int __init dp_init(void)
 		goto error_flow_exit;
 
 	/**
-	 * 注册虚拟网络设备到系统默认命名空间init_net，此外用户自定义命名空间为net
+	 * 注册虚拟网络设备到系统默认命名空间init_net(此外用户自定义命名空间为net)。
 	 */
 	err = register_pernet_device(&ovs_net_ops);
 	if (err)
@@ -2429,8 +2437,9 @@ static int __init dp_init(void)
 		goto error_unreg_notifier;
 
 	/**
-	 * 完成对四种类型的family以及相应操作的注册，包括datapath、vport、flow 和packet。
-	 * 前三种family，都对应四种操作都包括NEW、DEL、GET、SET，而packet的操作仅为EXECUTE。
+	 * 注册PF_NETLINK协议NETLINK_GENERIC通用netlink子协议。
+	 * socket(PF_NETLINK, ..., NETLINK_GENERIC)就可以用注册的通用子协议代替如
+	 * socket(PF_NETLINK, ..., OVS_DATAPATH_FAMILY)
 	 */
 	err = dp_register_genl();
 	if (err < 0)
@@ -2479,16 +2488,14 @@ module_init(dp_init);
 module_exit(dp_cleanup);
 
 /**
- * 驱动模块描述信息: 描述、许可证、版本、别名等
+ * 驱动模块描述信息: 描述、许可证、版本
  */
 MODULE_DESCRIPTION("Open vSwitch switching datapath");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(VERSION);
-MODULE_ALIAS_GENL_FAMILY(OVS_DATAPATH_FAMILY);
-MODULE_ALIAS_GENL_FAMILY(OVS_VPORT_FAMILY);
-MODULE_ALIAS_GENL_FAMILY(OVS_FLOW_FAMILY);
-/** 
- * 通用网络链路簇
+/**
+ * 通用netlink子协议描述
+ * 通用netlink协议簇
  * #define OVS_PACKET_FAMILY "ovs_packet"
  *
  * #define MODULE_ALIAS_GENL_FAMILY(family)\
@@ -2497,4 +2504,7 @@ MODULE_ALIAS_GENL_FAMILY(OVS_FLOW_FAMILY);
  * #define MODULE_ALIAS_NET_PF_PROTO_NAME(pf, proto, name) \
  *     MODULE_ALIAS("net-pf-" __stringify(pf) "-proto-" __stringify(proto) \
  */
+MODULE_ALIAS_GENL_FAMILY(OVS_DATAPATH_FAMILY);
+MODULE_ALIAS_GENL_FAMILY(OVS_VPORT_FAMILY);
+MODULE_ALIAS_GENL_FAMILY(OVS_FLOW_FAMILY);
 MODULE_ALIAS_GENL_FAMILY(OVS_PACKET_FAMILY);
