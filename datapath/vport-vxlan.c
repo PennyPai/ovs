@@ -157,23 +157,25 @@ static struct vport *vxlan_create(const struct vport_parms *parms)
 }
 
 static struct vport_ops ovs_vxlan_netdev_vport_ops = {
-	.type			= OVS_VPORT_TYPE_VXLAN,
-	.create			= vxlan_create,
-	.destroy		= ovs_netdev_tunnel_destroy,
-	.get_options		= vxlan_get_options,
+	.type			= OVS_VPORT_TYPE_VXLAN,			/* 端口类型为vxlan */
+	.create			= vxlan_create, 				/* vxlan端口创建函数 */
+	.destroy		= ovs_netdev_tunnel_destroy,	/* vxlan端口销毁函数 */
+	.get_options		= vxlan_get_options,		/* vxlan获取option函数*/
 #ifndef USE_UPSTREAM_TUNNEL
-	.fill_metadata_dst	= vxlan_fill_metadata_dst,
+	.fill_metadata_dst	= vxlan_fill_metadata_dst,	/* vxlan填充元数据函数*/
 #endif
-	.send			= vxlan_xmit,
+	.send			= vxlan_xmit,					/* vxlan端口发送数据函数 */
 };
 
 static int __init ovs_vxlan_tnl_init(void)
 {
+	/* 注册vxlan端口结构体 */
 	return ovs_vport_ops_register(&ovs_vxlan_netdev_vport_ops);
 }
 
 static void __exit ovs_vxlan_tnl_exit(void)
 {
+	/* 反注册注册vxlan端口结构体 */
 	ovs_vport_ops_unregister(&ovs_vxlan_netdev_vport_ops);
 }
 

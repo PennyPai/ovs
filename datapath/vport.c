@@ -248,18 +248,25 @@ struct vport *ovs_vport_add(const struct vport_parms *parms)
 	if (ops) {
 		struct hlist_head *bucket;
 
+		/* 如果模块已经插入内核，则递增该模块引用计数；如果该模块还没有插入内核，则返回0表示出错
+		   判断module模块是否处于活动状态，然后通过local_inc()宏将该模块的引用计数加1 */
 		if (!try_module_get(ops->owner))
 			return ERR_PTR(-EAFNOSUPPORT);
 
+		/* 创建端口 */
 		vport = ops->create(parms);
 		if (IS_ERR(vport)) {
+			/* 使指定的模块引用计数减1 */
 			module_put(ops->owner);
 			return vport;
 		}
 
+		/* 根据命名空间和设备名称生成hash，返回端口对应的设备链表*/
 		bucket = hash_bucket(ovs_dp_get_net(vport->dp),
 				     ovs_vport_name(vport));
+		/* 将bucket添加到端口哈希链表开头 */
 		hlist_add_head_rcu(&vport->hash_node, bucket);
+		/* 返回创建的端口 */
 		return vport;
 	}
 
@@ -268,9 +275,11 @@ struct vport *ovs_vport_add(const struct vport_parms *parms)
 	 * workflow.
 	 */
 	ovs_unlock();
+	/* 让linux系统的用户空间调用/sbin/modprobe函数加载名为vport-type-%d.ko模块(即重新加载内核模块) */
 	request_module("vport-type-%d", parms->type);
 	ovs_lock();
 
+	/* 重新加载内核模块后再lookup */
 	if (!ovs_vport_lookup(parms))
 		return ERR_PTR(-EAFNOSUPPORT);
 	else

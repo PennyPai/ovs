@@ -61,10 +61,13 @@ u32 ovs_vport_find_upcall_portid(const struct vport *, struct sk_buff *);
  * @ids: Array storing the Netlink socket pids to be used for packets received
  * on this port that miss the flow table.
  */
+/* 与一个端口通信的netlink ID */
 struct vport_portids {
 	struct reciprocal_value rn_ids;
 	struct rcu_head rcu;
+	/* ids数值个数 */
 	u32 n_ids;
+	/* 这是Netlink分配的一个ID，不同的值代表不同的socket通道，默认的值是进程PID */
 	u32 ids[];
 };
 
@@ -114,14 +117,21 @@ struct vport {
  * @dp: New vport's datapath.
  * @port_no: New vport's port number.
  */
+/* 创建新端口时需要传递的参数结构体 */
 struct vport_parms {
+	/* 新端口名称 */
 	const char *name;
+	/* 新端口类型 */
 	enum ovs_vport_type type;
+	/* 从netlink消息中得到的OVS_VPORT_ATTR_OPTIONS */
 	struct nlattr *options;
 
 	/* For ovs_vport_alloc(). */
+	/* 新端口所属的网桥 */
 	struct datapath *dp;
+	/* 新端口号 */
 	u16 port_no;
+	/* 和netlink通信的id */
 	struct nlattr *upcall_portids;
 };
 
@@ -141,21 +151,31 @@ struct vport_parms {
  * @send: Send a packet on the device.
  * zero for dropped packets or negative for error.
  */
+/* 端口函数结构体 */
 struct vport_ops {
+	/* 端口类型 */
 	enum ovs_vport_type type;
 
 	/* Called with ovs_mutex. */
+	/* 创建新端口函数*/
 	struct vport *(*create)(const struct vport_parms *);
+	/* 销毁新端口函数 */
 	void (*destroy)(struct vport *);
 
+	/* 设置option成员 */
 	int (*set_options)(struct vport *, struct nlattr *);
+	/* 获取option成员 */
 	int (*get_options)(const struct vport *, struct sk_buff *);
 
+	/* 发送数据到设备 */
 	netdev_tx_t (*send)(struct sk_buff *skb);
 #ifndef USE_UPSTREAM_TUNNEL
+	/* 隧道类型时需要填充相应的隧道元信息 */
 	int  (*fill_metadata_dst)(struct net_device *dev, struct sk_buff *skb);
 #endif
+	/* 所有者(vport内核模块vxlan、gre、...) */
 	struct module *owner;
+	/* 所有vport内核模块链表(vxlan、gre、...) */
 	struct list_head list;
 };
 
