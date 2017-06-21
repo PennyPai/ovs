@@ -80,17 +80,27 @@ struct vport_portids {
  * @detach_list: list used for detaching vport in net-exit call.
  * @rcu: RCU callback head for deferred destruction.
  */
+/* 网桥的一个虚拟端口 */ 
 struct vport {
+	
 	struct net_device *dev;
+	/* 本虚拟端口所属网桥 */
 	struct datapath	*dp;
+	/* 存储接收数据包的netlink套接字数组 */
 	struct vport_portids __rcu *upcall_portids;
+	/* 端口号 */
 	u16 port_no;
 
+	/* 存储网桥多个端口的哈希链表，包括next和prev前驱后继 */
 	struct hlist_node hash_node;
+	/* 存储多个网桥的哈希链表 */
 	struct hlist_node dp_hash_node;
+	/* 这是端口结构体的操作函数指针结构体，结构体里面存放了很多操作函数的函数指针 */
 	const struct vport_ops *ops;
 
+	/* 存储正在移除的端口 */
 	struct list_head detach_list;
+	/* Read/Copy/Update锁 */
 	struct rcu_head rcu;
 };
 
